@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Calculadora fotovoltaica profissional do Sistema Energisy."
+    />
+    <title>Simulador Fotovoltaico | Energisy</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      #proposal-capture {
+        position: fixed;
+        top: 0;
+        left: -12000px;
+        z-index: -1;
+        width: 210mm;
+        background: #ffffff;
+      }
+
+      .pdf-document {
+        width: 210mm;
+        background: #ffffff;
+        color: #0f172a;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      .pdf-page {
+        box-sizing: border-box;
+        width: 210mm;
+        min-height: 297mm;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #ffffff;
+      }
+
+      .pdf-page + .pdf-page {
+        break-before: page;
+        page-break-before: always;
+      }
+
+      .pdf-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10mm;
+        padding: 9mm 15mm;
+        background: #1e3a8a;
+        color: #ffffff;
+      }
+
+      .pdf-logo {
+        width: 42mm;
+        max-height: 18mm;
+        object-fit: contain;
+        border-radius: 3mm;
+        background: #ffffff;
+        padding: 2mm 3mm;
+      }
+
+      .pdf-header-copy {
+        text-align: right;
+      }
+
+      .pdf-header-copy strong,
+      .pdf-header-copy span {
+        display: block;
+        color: #ffffff;
+      }
+
+      .pdf-header-copy strong {
+        font-size: 15px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .pdf-header-copy span {
+        margin-top: 3px;
+        color: #dbeafe;
+        font-size: 10px;
+      }
+
+      .pdf-yellow-line {
+        height: 3mm;
+        background: #facc15;
+      }
+
+      .pdf-content {
+        flex: 1;
+        padding: 10mm 15mm 8mm;
+      }
+
+      .pdf-kicker {
+        margin: 0 0 2mm;
+        color: #1d4ed8;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .pdf-title {
+        margin: 0;
+        color: #172554;
+        font-size: 25px;
+        line-height: 1.15;
+      }
+
+      .pdf-lead {
+        margin: 3mm 0 6mm;
+        color: #475569;
+        font-size: 11px;
+        line-height: 1.55;
+      }
+
+      .pdf-section {
+        margin-top: 6mm;
+      }
+
+      .pdf-section-title {
+        margin: 0 0 3mm;
+        color: #172554;
+        font-size: 15px;
+      }
+
+      .pdf-client-grid,
+      .pdf-metrics-grid,
+      .pdf-financial-grid,
+      .pdf-sales-metrics,
+      .pdf-next-steps {
+        display: grid;
+        gap: 4mm;
+      }
+
+      .pdf-client-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .pdf-metrics-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .pdf-financial-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .pdf-data-card,
+      .pdf-metric-card,
+      .pdf-financial-card {
+        box-sizing: border-box;
+        border: 1px solid #dbeafe;
+        border-radius: 3mm;
+        background: #f8fafc;
+        padding: 4mm;
+      }
+
+      .pdf-data-card span,
+      .pdf-data-card strong,
+      .pdf-metric-card span,
+      .pdf-metric-card strong,
+      .pdf-financial-card span,
+      .pdf-financial-card strong {
+        display: block;
+      }
+
+      .pdf-data-card span,
+      .pdf-metric-card span,
+      .pdf-financial-card span {
+        color: #64748b;
+        font-size: 8px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .pdf-data-card strong {
+        margin-top: 2mm;
+        color: #1e293b;
+        font-size: 11px;
+      }
+
+      .pdf-metric-card strong {
+        margin-top: 2mm;
+        color: #1e3a8a;
+        font-size: 16px;
+      }
+
+      .pdf-financial-card {
+        border-color: #fde047;
+        background: #fef9c3;
+      }
+
+      .pdf-financial-card span {
+        color: #854d0e;
+      }
+
+      .pdf-financial-card strong {
+        margin-top: 2mm;
+        color: #422006;
+        font-size: 19px;
+      }
+
+      .pdf-assumptions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 3mm;
+        border-radius: 3mm;
+        background: #eff6ff;
+        padding: 4mm;
+      }
+
+      .pdf-assumption span,
+      .pdf-assumption strong {
+        display: block;
+      }
+
+      .pdf-assumption span {
+        color: #64748b;
+        font-size: 8px;
+      }
+
+      .pdf-assumption strong {
+        margin-top: 1mm;
+        color: #1e3a8a;
+        font-size: 10px;
+      }
+
+      .pdf-note {
+        margin: 4mm 0 0;
+        color: #64748b;
+        font-size: 8px;
+        line-height: 1.45;
+      }
+
+      .pdf-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8mm;
+        padding: 6mm 15mm;
+        background: #1e3a8a;
+        color: #ffffff;
+        font-size: 8px;
+      }
+
+      .pdf-footer strong,
+      .pdf-footer span {
+        color: #ffffff;
+      }
+
+      .pdf-script-box {
+        margin-top: 6mm;
+        border-left: 4px solid #facc15;
+        border-radius: 0 3mm 3mm 0;
+        background: #eff6ff;
+        padding: 5mm 6mm;
+      }
+
+      .pdf-script-label {
+        display: block;
+        margin-bottom: 2mm;
+        color: #1e3a8a;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .pdf-script-box p,
+      .pdf-roi-copy {
+        margin: 0;
+        color: #334155;
+        font-size: 11px;
+        line-height: 1.6;
+      }
+
+      .pdf-sales-metrics {
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 6mm;
+      }
+
+      .pdf-sales-metric {
+        border: 1px solid #bfdbfe;
+        border-radius: 3mm;
+        padding: 4mm;
+      }
+
+      .pdf-sales-metric span,
+      .pdf-sales-metric strong {
+        display: block;
+      }
+
+      .pdf-sales-metric span {
+        color: #64748b;
+        font-size: 8px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .pdf-sales-metric strong {
+        margin-top: 2mm;
+        color: #1e3a8a;
+        font-size: 15px;
+      }
+
+      .pdf-roi-copy {
+        margin-top: 3mm;
+      }
+
+      .pdf-next-steps {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .pdf-step {
+        border-radius: 3mm;
+        background: #f8fafc;
+        padding: 4mm;
+      }
+
+      .pdf-step-number {
+        display: inline-flex;
+        width: 7mm;
+        height: 7mm;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: #facc15;
+        color: #172554;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .pdf-step strong {
+        display: block;
+        margin: 2mm 0 1mm;
+        color: #1e3a8a;
+        font-size: 10px;
+      }
+
+      .pdf-step p {
+        margin: 0;
+        color: #64748b;
+        font-size: 8px;
+        line-height: 1.45;
+      }
+
+      .pdf-closing-box {
+        margin-top: 6mm;
+        border-radius: 3mm;
+        background: #fef9c3;
+        padding: 5mm 6mm;
+      }
+
+      .pdf-closing-box strong {
+        display: block;
+        margin-bottom: 2mm;
+        color: #854d0e;
+        font-size: 10px;
+        text-transform: uppercase;
+      }
+
+      .pdf-closing-box p {
+        margin: 0;
+        color: #422006;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.55;
+      }
+    </style>
+  </head>
+
+  <body class="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased">
+    <div
+      id="auth-loader"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-50 transition-opacity duration-200"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="text-center">
+        <span
+          class="mx-auto block h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-blue-800"
+          aria-hidden="true"
+        ></span>
+        <p id="auth-loader-text" class="mt-4 text-sm font-medium text-slate-600">
+          Verificando acesso...
+        </p>
+      </div>
+    </div>
+
+    <div
+      id="toast-container"
+      class="pointer-events-none fixed right-4 top-4 z-[110] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-3"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
+
+    <div
+      id="menu-backdrop"
+      class="fixed inset-0 z-40 hidden bg-slate-950/40 backdrop-blur-sm lg:hidden"
+      aria-hidden="true"
+    ></div>
+
+    <aside
+      id="sidebar"
+      class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-300 ease-in-out lg:translate-x-0 lg:shadow-sm"
+      aria-label="Navegação principal"
+    >
+      <div class="relative border-b border-slate-100 px-6 pt-4">
+        <a href="dashboard.html" class="block" aria-label="Energisy - Dashboard">
+          <img
+            src="logoenergisy.PNG"
+            alt="Energisy Soluções"
+            class="mx-auto mb-4 h-auto w-32 object-contain"
+          />
+        </a>
+
+        <button
+          id="close-menu-button"
+          type="button"
+          class="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-lg text-2xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 lg:hidden"
+          aria-label="Fechar menu"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto px-4 py-6">
+        <p class="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          Menu principal
+        </p>
+
+        <ul class="space-y-1.5">
+          <li>
+            <a
+              href="dashboard.html"
+              class="group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-500 transition group-hover:bg-yellow-400 group-hover:text-blue-900"
+                aria-hidden="true"
+              >D</span>
+              Dashboard
+            </a>
+          </li>
+          <li>
+            <a
+              href="novo-cliente.html"
+              class="group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-lg font-bold text-slate-500 transition group-hover:bg-yellow-400 group-hover:text-blue-900"
+                aria-hidden="true"
+              >+</span>
+              Novo Cliente
+            </a>
+          </li>
+          <li>
+            <a
+              href="crm.html"
+              class="group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-500 transition group-hover:bg-yellow-400 group-hover:text-blue-900"
+                aria-hidden="true"
+              >CRM</span>
+              CRM
+            </a>
+          </li>
+          <li>
+            <a
+              href="simulador.html"
+              class="flex items-center gap-3 rounded-xl bg-blue-50 px-3 py-3 text-sm font-semibold text-blue-900"
+              aria-current="page"
+            >
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-400 text-base font-bold text-blue-900"
+                aria-hidden="true"
+              >%</span>
+              Simulador
+            </a>
+          </li>
+          <li>
+            <a
+              href="followup.html"
+              class="group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-lg font-semibold text-slate-500 transition group-hover:bg-yellow-400 group-hover:text-blue-900"
+                aria-hidden="true"
+              >&nearr;</span>
+              Follow-up
+            </a>
+          </li>
+          <li>
+            <a
+              href="configuracoes.html"
+              class="group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-lg font-bold text-slate-500 transition group-hover:bg-yellow-400 group-hover:text-blue-900"
+                aria-hidden="true"
+              >&#9881;</span>
+              Configurações
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="border-t border-slate-100 p-4">
+        <div class="mb-3 rounded-xl bg-slate-50 px-3 py-3">
+          <p class="text-xs font-medium text-slate-400">Conectado como</p>
+          <p
+            id="sidebar-user-email"
+            class="mt-1 truncate text-sm font-semibold text-slate-700"
+          >
+            Usuário Energisy
+          </p>
+        </div>
+
+        <button
+          id="logout-button"
+          type="button"
+          class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-4 focus:ring-red-100 disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          <span
+            id="logout-spinner"
+            class="hidden h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current"
+            aria-hidden="true"
+          ></span>
+          <span id="logout-text">Sair</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="min-h-screen lg:ml-72">
+      <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div class="flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div class="flex items-center gap-3">
+            <button
+              id="menu-button"
+              type="button"
+              class="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100 lg:hidden"
+              aria-label="Abrir menu"
+              aria-controls="sidebar"
+              aria-expanded="false"
+            >
+              <span class="space-y-1.5" aria-hidden="true">
+                <span class="block h-0.5 w-5 rounded bg-current"></span>
+                <span class="block h-0.5 w-5 rounded bg-current"></span>
+                <span class="block h-0.5 w-5 rounded bg-current"></span>
+              </span>
+            </button>
+
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wider text-slate-400">
+                Engenharia solar
+              </p>
+              <p
+                id="header-user-greeting"
+                class="max-w-36 truncate text-sm font-semibold text-slate-700 sm:max-w-64"
+              >
+                Boas-vindas, Usuário
+              </p>
+            </div>
+          </div>
+
+          <span class="hidden rounded-full bg-blue-900 px-3 py-1.5 text-xs font-semibold text-white sm:inline-flex">
+            Calculadora profissional
+          </span>
+        </div>
+      </header>
+
+      <div class="px-4 py-7 sm:px-6 sm:py-9 lg:px-8">
+        <section class="mx-auto max-w-5xl" aria-labelledby="page-title">
+          <div>
+            <p class="text-sm font-semibold text-blue-800">Dimensionamento fotovoltaico</p>
+            <h1
+              id="page-title"
+              class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"
+            >
+              Calculadora Solar
+            </h1>
+            <p class="mt-2 max-w-3xl text-sm leading-relaxed text-slate-500">
+              Informe os dados da unidade consumidora para iniciar uma estimativa
+              técnica e comercial do sistema fotovoltaico.
+            </p>
+          </div>
+
+          <div class="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div class="border-b border-slate-100 px-5 py-5 sm:px-7">
+                <div class="flex items-center gap-3">
+                  <span
+                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-400 text-lg font-bold text-blue-900"
+                    aria-hidden="true"
+                  >1</span>
+                  <div>
+                    <h2 class="font-bold text-slate-900">Dados de consumo</h2>
+                    <p class="mt-0.5 text-xs text-slate-500">
+                      Todos os campos editáveis são obrigatórios.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <form id="solar-calculator-form" class="p-5 sm:p-7">
+                <div class="grid gap-6 sm:grid-cols-2">
+                  <div>
+                    <label for="state" class="mb-2 block text-sm font-semibold text-slate-700">
+                      Estado (UF)
+                      <span class="text-red-600" aria-hidden="true">*</span>
+                    </label>
+                    <select
+                      id="state"
+                      name="state"
+                      required
+                      class="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-blue-800 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                    >
+                      <option value="">Selecione a UF</option>
+                      <option value="AC">AC</option>
+                      <option value="AL">AL</option>
+                      <option value="AP">AP</option>
+                      <option value="AM">AM</option>
+                      <option value="BA">BA</option>
+                      <option value="CE">CE</option>
+                      <option value="DF">DF</option>
+                      <option value="ES">ES</option>
+                      <option value="GO">GO</option>
+                      <option value="MA">MA</option>
+                      <option value="MT">MT</option>
+                      <option value="MS">MS</option>
+                      <option value="MG">MG</option>
+                      <option value="PA">PA</option>
+                      <option value="PB">PB</option>
+                      <option value="PR">PR</option>
+                      <option value="PE">PE</option>
+                      <option value="PI">PI</option>
+                      <option value="RJ">RJ</option>
+                      <option value="RN">RN</option>
+                      <option value="RS">RS</option>
+                      <option value="RO">RO</option>
+                      <option value="RR">RR</option>
+                      <option value="SC">SC</option>
+                      <option value="SP">SP</option>
+                      <option value="SE">SE</option>
+                      <option value="TO">TO</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      for="connection-type"
+                      class="mb-2 block text-sm font-semibold text-slate-700"
+                    >
+                      Tipo de Ligação
+                      <span class="text-red-600" aria-hidden="true">*</span>
+                    </label>
+                    <select
+                      id="connection-type"
+                      name="connection_type"
+                      required
+                      class="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-blue-800 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                    >
+                      <option value="">Selecione o tipo de ligação</option>
+                      <option value="residencial_bifasico">Residencial (Bifásico)</option>
+                      <option value="comercial_trifasico">Comercial (Trifásico)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      for="average-bill-value"
+                      class="mb-2 block text-sm font-semibold text-slate-700"
+                    >
+                      Valor Médio da Conta (R$)
+                      <span class="text-red-600" aria-hidden="true">*</span>
+                    </label>
+                    <div class="relative">
+                      <span
+                        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-sm font-semibold text-slate-500"
+                        aria-hidden="true"
+                      >R$</span>
+                      <input
+                        id="average-bill-value"
+                        name="average_bill_value"
+                        type="number"
+                        inputmode="decimal"
+                        min="0.01"
+                        step="0.01"
+                        required
+                        placeholder="500,00"
+                        class="block w-full rounded-xl border border-slate-300 bg-white py-3 pl-12 pr-4 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-800 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      for="average-consumption"
+                      class="mb-2 block text-sm font-semibold text-slate-700"
+                    >
+                      Consumo Médio (kWh)
+                      <span class="text-xs font-normal text-blue-700">Automático</span>
+                    </label>
+                    <div class="relative">
+                      <input
+                        id="average-consumption"
+                        name="average_consumption"
+                        type="number"
+                        inputmode="decimal"
+                        readonly
+                        aria-readonly="true"
+                        aria-describedby="consumption-help"
+                        placeholder="Preenchido automaticamente"
+                        class="block w-full cursor-not-allowed rounded-xl border border-blue-200 bg-blue-50 py-3 pl-4 pr-20 font-semibold text-blue-900 outline-none"
+                      />
+                      <span
+                        class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-sm font-medium text-blue-700"
+                      >kWh/mês</span>
+                    </div>
+                    <p id="consumption-help" class="mt-2 text-xs text-slate-500">
+                      Calculado pela conta média dividida pelo valor local do kWh.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="mt-7 flex justify-end border-t border-slate-100 pt-6">
+                  <button
+                    id="calculate-button"
+                    type="submit"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-800 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+                  >
+                    <span
+                      id="calculate-spinner"
+                      class="hidden h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                      aria-hidden="true"
+                    ></span>
+                    <span id="calculate-text">Calcular Sistema</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <aside class="h-fit overflow-hidden rounded-2xl bg-blue-900 text-white shadow-sm">
+              <div class="border-b border-white/10 p-6">
+                <span
+                  class="flex h-11 w-11 items-center justify-center rounded-xl bg-yellow-400 text-lg font-bold text-blue-900"
+                  aria-hidden="true"
+                >kWh</span>
+                <h2 class="mt-5 text-lg font-bold text-white">Cálculo inteligente</h2>
+                <p class="mt-2 text-sm leading-relaxed text-blue-100">
+                  O consumo é estimado automaticamente a partir do valor médio pago
+                  à distribuidora.
+                </p>
+              </div>
+
+              <div class="p-6">
+                <p class="text-xs font-semibold uppercase tracking-wider text-blue-200">
+                  Tarifa de referência
+                </p>
+                <p id="kwh-reference" class="mt-2 text-2xl font-bold text-yellow-400">
+                  Selecione a UF
+                </p>
+                <p class="mt-3 text-xs leading-relaxed text-blue-100">
+                  Estimativa estadual média para 2026, usada no cálculo automático
+                  do consumo e da taxa mínima de disponibilidade.
+                </p>
+                <div class="mt-5 rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-blue-200">
+                    Custo de disponibilidade
+                  </p>
+                  <p id="availability-reference" class="mt-2 text-sm font-bold text-white">
+                    Selecione o tipo de ligação
+                  </p>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <section
+            id="calculation-results"
+            class="mt-8 hidden"
+            aria-labelledby="results-title"
+            aria-live="polite"
+          >
+            <div class="rounded-2xl bg-blue-900 p-5 text-white shadow-md sm:p-7">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p class="text-sm font-semibold text-yellow-400">Cálculo concluído</p>
+                  <h2 id="results-title" class="mt-1 text-2xl font-bold text-white">
+                    Resultado da Simulação
+                  </h2>
+                </div>
+                <p id="result-context" class="text-sm font-medium text-blue-100">
+                  UF e ligação selecionadas
+                </p>
+              </div>
+
+              <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                <article class="rounded-xl bg-white p-5 text-slate-900 shadow-sm">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Potência do sistema
+                  </p>
+                  <p id="result-system-power" class="mt-2 text-2xl font-bold text-blue-900">
+                    0 kWp
+                  </p>
+                  <p class="mt-2 text-xs text-slate-500">Consumo compensável ÷ 120</p>
+                </article>
+
+                <article class="rounded-xl bg-white p-5 text-slate-900 shadow-sm">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Quantidade de placas
+                  </p>
+                  <p id="result-panel-count" class="mt-2 text-2xl font-bold text-blue-900">
+                    0 placas
+                  </p>
+                  <p class="mt-2 text-xs text-slate-500">Painéis de 550 W</p>
+                </article>
+
+                <article class="rounded-xl bg-white p-5 text-slate-900 shadow-sm">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Área de telhado necessária
+                  </p>
+                  <p id="result-required-area" class="mt-2 text-2xl font-bold text-blue-900">
+                    0 m²
+                  </p>
+                  <p class="mt-2 text-xs text-slate-500">2,2 m² por placa</p>
+                </article>
+
+                <article class="rounded-xl bg-white p-5 text-slate-900 shadow-sm">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Valor estimado do investimento
+                  </p>
+                  <p id="result-investment" class="mt-2 text-2xl font-bold text-blue-900">
+                    R$ 0,00
+                  </p>
+                  <p class="mt-2 text-xs text-slate-500">R$ 4.000,00 por kWp</p>
+                </article>
+
+                <article class="rounded-xl bg-yellow-400 p-5 text-blue-950 shadow-sm">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-blue-800">
+                    Economia estimada em 25 anos
+                  </p>
+                  <p id="result-savings-25-years" class="mt-2 text-2xl font-bold text-blue-950">
+                    R$ 0,00
+                  </p>
+                  <p class="mt-2 text-xs text-blue-800">Projeção de 300 meses</p>
+                </article>
+              </div>
+
+              <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-blue-200">
+                    Consumo compensável
+                  </p>
+                  <p id="result-compensable-consumption" class="mt-2 text-lg font-bold text-white">
+                    0 kWh/mês
+                  </p>
+                </div>
+                <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-blue-200">
+                    Taxa mínima estimada
+                  </p>
+                  <p id="result-minimum-fee" class="mt-2 text-lg font-bold text-white">
+                    R$ 0,00/mês
+                  </p>
+                </div>
+              </div>
+
+              <p class="mt-5 text-xs leading-relaxed text-blue-200">
+                Estimativa simplificada, sem considerar inflação energética, degradação,
+                manutenção, sombreamento ou particularidades técnicas do imóvel.
+              </p>
+            </div>
+
+            <div class="mt-5 flex justify-end">
+              <button
+                id="open-pdf-modal-button"
+                type="button"
+                class="flex w-full items-center justify-center gap-2 rounded-xl bg-yellow-400 px-6 py-3 font-bold text-blue-950 shadow-sm transition hover:bg-yellow-500 focus:outline-none focus:ring-4 focus:ring-yellow-200 sm:w-auto"
+              >
+                <span aria-hidden="true">PDF</span>
+                Gerar Proposta em PDF
+              </button>
+            </div>
+          </section>
+        </section>
+      </div>
+    </main>
+
+    <div
+      id="proposal-modal"
+      class="fixed inset-0 z-[120] hidden items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
+      role="presentation"
+    >
+      <div
+        class="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="proposal-modal-title"
+      >
+        <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-blue-700">
+              Proposta comercial
+            </p>
+            <h2 id="proposal-modal-title" class="mt-1 text-xl font-bold text-slate-900">
+              Identificação do cliente
+            </h2>
+          </div>
+          <button
+            id="close-proposal-modal-button"
+            type="button"
+            class="flex h-10 w-10 items-center justify-center rounded-xl text-2xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100"
+            aria-label="Fechar"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <form id="proposal-data-form" class="p-5 sm:p-6">
+          <label for="proposal-client-name" class="mb-2 block text-sm font-semibold text-slate-700">
+            Nome ou Razão Social
+            <span class="text-red-600" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="proposal-client-name"
+            name="proposal_client_name"
+            type="text"
+            autocomplete="name"
+            maxlength="120"
+            required
+            placeholder="Nome completo ou razão social"
+            class="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-800 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+          />
+          <p class="mt-2 text-xs leading-relaxed text-slate-500">
+            Os demais dados serão preenchidos automaticamente com o resultado atual da calculadora.
+          </p>
+
+          <div class="mt-6 flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+            <button
+              id="cancel-proposal-button"
+              type="button"
+              class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100"
+            >
+              Cancelar
+            </button>
+            <button
+              id="generate-pdf-button"
+              type="submit"
+              class="flex items-center justify-center gap-2 rounded-xl bg-blue-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-wait disabled:opacity-70"
+            >
+              <span
+                id="generate-pdf-spinner"
+                class="hidden h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                aria-hidden="true"
+              ></span>
+              <span id="generate-pdf-text">Gerar e baixar PDF</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="proposal-capture" aria-hidden="true">
+      <div id="proposal-document" class="pdf-document">
+        <article class="pdf-page">
+          <header class="pdf-header">
+            <img src="logoenergisy.PNG" alt="Energisy Soluções" class="pdf-logo" />
+            <div class="pdf-header-copy">
+              <strong>Proposta Fotovoltaica</strong>
+              <span id="pdf-proposal-date">Data da simulação</span>
+            </div>
+          </header>
+
+          <div class="pdf-yellow-line"></div>
+
+          <div class="pdf-content">
+            <p class="pdf-kicker">Energisy Soluções</p>
+            <h1 class="pdf-title">Energia solar dimensionada para sua realidade</h1>
+            <p class="pdf-lead">
+              Esta proposta reúne o dimensionamento preliminar e a projeção financeira
+              calculados a partir dos dados informados para a unidade consumidora.
+            </p>
+
+            <section class="pdf-section">
+              <h2 class="pdf-section-title">Dados do cliente</h2>
+              <div class="pdf-client-grid">
+                <div class="pdf-data-card">
+                  <span>Nome ou Razão Social</span>
+                  <strong id="pdf-client-name">Cliente</strong>
+                </div>
+                <div class="pdf-data-card">
+                  <span>Estado</span>
+                  <strong id="pdf-client-state">UF</strong>
+                </div>
+                <div class="pdf-data-card">
+                  <span>Tipo de ligação</span>
+                  <strong id="pdf-connection-type">Ligação</strong>
+                </div>
+                <div class="pdf-data-card">
+                  <span>Valor médio da conta</span>
+                  <strong id="pdf-average-bill">R$ 0,00</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="pdf-section">
+              <h2 class="pdf-section-title">Resumo técnico do projeto</h2>
+              <div class="pdf-metrics-grid">
+                <div class="pdf-metric-card">
+                  <span>Potência do sistema</span>
+                  <strong id="pdf-system-power">0 kWp</strong>
+                </div>
+                <div class="pdf-metric-card">
+                  <span>Quantidade estimada</span>
+                  <strong id="pdf-panel-count">0 placas</strong>
+                </div>
+                <div class="pdf-metric-card">
+                  <span>Área de telhado</span>
+                  <strong id="pdf-required-area">0 m²</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="pdf-section">
+              <h2 class="pdf-section-title">Projeção financeira</h2>
+              <div class="pdf-financial-grid">
+                <div class="pdf-financial-card">
+                  <span>Investimento estimado</span>
+                  <strong id="pdf-investment">R$ 0,00</strong>
+                </div>
+                <div class="pdf-financial-card">
+                  <span>Economia acumulada em 25 anos</span>
+                  <strong id="pdf-savings-25-years">R$ 0,00</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="pdf-section">
+              <h2 class="pdf-section-title">Premissas da simulação</h2>
+              <div class="pdf-assumptions">
+                <div class="pdf-assumption">
+                  <span>Tarifa estadual estimada</span>
+                  <strong id="pdf-state-tariff">R$ 0,00/kWh</strong>
+                </div>
+                <div class="pdf-assumption">
+                  <span>Consumo médio estimado</span>
+                  <strong id="pdf-average-consumption">0 kWh/mês</strong>
+                </div>
+                <div class="pdf-assumption">
+                  <span>Custo de disponibilidade</span>
+                  <strong id="pdf-availability">0 kWh/mês</strong>
+                </div>
+              </div>
+              <p class="pdf-note">
+                Valores preliminares e ilustrativos. O projeto executivo depende de
+                vistoria técnica, irradiação local, orientação do telhado, sombreamento,
+                regras da distribuidora e validação das condições de instalação.
+              </p>
+            </section>
+          </div>
+
+          <footer class="pdf-footer">
+            <strong>Energisy Soluções</strong>
+            <span>Energia limpa, economia e futuro.</span>
+            <span>Página 1 de 2</span>
+          </footer>
+        </article>
+
+        <article class="pdf-page">
+          <header class="pdf-header">
+            <img src="logoenergisy.PNG" alt="Energisy Soluções" class="pdf-logo" />
+            <div class="pdf-header-copy">
+              <strong>Guia de Apresentação</strong>
+              <span>Página do vendedor</span>
+            </div>
+          </header>
+
+          <div class="pdf-yellow-line"></div>
+
+          <div class="pdf-content">
+            <p class="pdf-kicker">Roteiro de vendas</p>
+            <h1 class="pdf-title">Conduza o fechamento com clareza e confiança</h1>
+            <p class="pdf-lead">
+              Use este roteiro como apoio. Fale com naturalidade, escute as prioridades
+              do cliente e conecte os números da proposta ao benefício que ele busca.
+            </p>
+
+            <section class="pdf-script-box">
+              <span class="pdf-script-label">Sugestão de abertura</span>
+              <p>
+                “<span id="pdf-script-client-name">Cliente</span>, hoje a conta de energia
+                é uma despesa que se repete todos os meses e ainda sofre reajustes. Com
+                este projeto, parte desse valor passa a construir um ativo seu, capaz de
+                produzir energia limpa e gerar economia por muitos anos.”
+              </p>
+            </section>
+
+            <div class="pdf-sales-metrics">
+              <div class="pdf-sales-metric">
+                <span>Investimento estimado</span>
+                <strong id="pdf-script-investment">R$ 0,00</strong>
+              </div>
+              <div class="pdf-sales-metric">
+                <span>Economia em 25 anos</span>
+                <strong id="pdf-script-savings">R$ 0,00</strong>
+              </div>
+              <div class="pdf-sales-metric">
+                <span>Retorno simples estimado</span>
+                <strong id="pdf-script-payback">0 anos</strong>
+              </div>
+            </div>
+
+            <section class="pdf-section">
+              <h2 class="pdf-section-title">Como explicar o retorno do investimento</h2>
+              <p class="pdf-roi-copy">
+                “A estimativa aponta um investimento de
+                <strong id="pdf-script-investment-inline">R$ 0,00</strong> e uma economia
+                acumulada de <strong id="pdf-script-savings-inline">R$ 0,00</strong> em
+                25 anos. Mantidas as premissas atuais, o retorno simples acontece em
+                aproximadamente <strong id="pdf-script-payback-inline">0 anos</strong>.
+                Depois disso, a economia continua trabalhando a favor do cliente.”
+              </p>
+            </section>
+
+            <section class="pdf-section">
+              <h2 class="pdf-section-title">Próximos passos para avançar</h2>
+              <div class="pdf-next-steps">
+                <div class="pdf-step">
+                  <span class="pdf-step-number">1</span>
+                  <strong>Validação técnica</strong>
+                  <p>Confirmar telhado, incidência solar, estrutura e padrão elétrico.</p>
+                </div>
+                <div class="pdf-step">
+                  <span class="pdf-step-number">2</span>
+                  <strong>Condição comercial</strong>
+                  <p>Definir pagamento ou financiamento adequado ao planejamento.</p>
+                </div>
+                <div class="pdf-step">
+                  <span class="pdf-step-number">3</span>
+                  <strong>Assinatura e agenda</strong>
+                  <p>Formalizar a proposta e reservar o início do projeto executivo.</p>
+                </div>
+              </div>
+            </section>
+
+            <section class="pdf-closing-box">
+              <strong>Pergunta de fechamento</strong>
+              <p>
+                “Os números e os benefícios fazem sentido para você? Se sim, podemos
+                avançar agora com a validação técnica e preparar o projeto para a
+                próxima etapa.”
+              </p>
+            </section>
+          </div>
+
+          <footer class="pdf-footer">
+            <strong>Energisy Soluções</strong>
+            <span>Material de apoio interno ao vendedor</span>
+            <span>Página 2 de 2</span>
+          </footer>
+        </article>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="auth-utils.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+      (() => {
+        "use strict";
+
+        // Estimativas comerciais médias para 2026, em R$/kWh, considerando
+        // tributos e bandeiras típicas. Não substituem a tarifa da distribuidora.
+        const STATE_KWH_TARIFFS_2026 = Object.freeze({
+          AC: 1.01,
+          AL: 0.99,
+          AP: 0.89,
+          AM: 0.86,
+          BA: 1.02,
+          CE: 0.85,
+          DF: 0.96,
+          ES: 0.86,
+          GO: 0.98,
+          MA: 0.89,
+          MT: 1.10,
+          MS: 1.08,
+          MG: 0.97,
+          PA: 1.14,
+          PB: 0.73,
+          PR: 0.95,
+          PE: 0.90,
+          PI: 1.03,
+          RJ: 1.12,
+          RN: 0.85,
+          RS: 0.89,
+          RO: 0.95,
+          RR: 0.81,
+          SC: 0.76,
+          SP: 0.90,
+          SE: 0.87,
+          TO: 1.05,
+        });
+        const PANEL_POWER_KWP = 0.55;
+        const PANEL_AREA_SQUARE_METERS = 2.2;
+        const MONTHLY_SOLAR_FACTOR = 120;
+        const COST_PER_KWP = 4000;
+        const PROJECTION_YEARS = 25;
+        const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+        const numberFormatter = new Intl.NumberFormat("pt-BR", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        });
+
+        const authLoader = document.getElementById("auth-loader");
+        const authLoaderText = document.getElementById("auth-loader-text");
+        const sidebar = document.getElementById("sidebar");
+        const menuBackdrop = document.getElementById("menu-backdrop");
+        const menuButton = document.getElementById("menu-button");
+        const closeMenuButton = document.getElementById("close-menu-button");
+        const logoutButton = document.getElementById("logout-button");
+        const logoutSpinner = document.getElementById("logout-spinner");
+        const logoutText = document.getElementById("logout-text");
+        const sidebarUserEmail = document.getElementById("sidebar-user-email");
+        const headerUserGreeting = document.getElementById("header-user-greeting");
+        const toastContainer = document.getElementById("toast-container");
+        const calculatorForm = document.getElementById("solar-calculator-form");
+        const stateSelect = document.getElementById("state");
+        const connectionTypeSelect = document.getElementById("connection-type");
+        const averageBillValueInput = document.getElementById("average-bill-value");
+        const averageConsumptionInput = document.getElementById("average-consumption");
+        const kwhReference = document.getElementById("kwh-reference");
+        const availabilityReference = document.getElementById("availability-reference");
+        const calculationResults = document.getElementById("calculation-results");
+        const resultContext = document.getElementById("result-context");
+        const resultSystemPower = document.getElementById("result-system-power");
+        const resultPanelCount = document.getElementById("result-panel-count");
+        const resultRequiredArea = document.getElementById("result-required-area");
+        const resultInvestment = document.getElementById("result-investment");
+        const resultCompensableConsumption = document.getElementById(
+          "result-compensable-consumption"
+        );
+        const resultMinimumFee = document.getElementById("result-minimum-fee");
+        const resultSavings25Years = document.getElementById(
+          "result-savings-25-years"
+        );
+        const calculateButton = document.getElementById("calculate-button");
+        const calculateSpinner = document.getElementById("calculate-spinner");
+        const calculateText = document.getElementById("calculate-text");
+        const openPdfModalButton = document.getElementById("open-pdf-modal-button");
+        const proposalModal = document.getElementById("proposal-modal");
+        const closeProposalModalButton = document.getElementById(
+          "close-proposal-modal-button"
+        );
+        const cancelProposalButton = document.getElementById("cancel-proposal-button");
+        const proposalDataForm = document.getElementById("proposal-data-form");
+        const proposalClientNameInput = document.getElementById(
+          "proposal-client-name"
+        );
+        const generatePdfButton = document.getElementById("generate-pdf-button");
+        const generatePdfSpinner = document.getElementById("generate-pdf-spinner");
+        const generatePdfText = document.getElementById("generate-pdf-text");
+        const proposalDocument = document.getElementById("proposal-document");
+        let isGeneratingPdf = false;
+
+        function setMenuOpen(isOpen) {
+          sidebar.classList.toggle("-translate-x-full", !isOpen);
+          menuBackdrop.classList.toggle("hidden", !isOpen);
+          menuButton.setAttribute("aria-expanded", String(isOpen));
+          document.body.classList.toggle("overflow-hidden", isOpen);
+        }
+
+        function showToast(message, type = "error") {
+          const toast = document.createElement("div");
+          const styles = {
+            error: "border-red-700 bg-red-600 text-white",
+            success: "border-green-700 bg-green-600 text-white",
+          };
+
+          toast.className = `pointer-events-auto rounded-xl border px-4 py-3 text-sm font-semibold shadow-md ${styles[type]}`;
+          toast.setAttribute("role", type === "error" ? "alert" : "status");
+          toast.textContent = message;
+          toastContainer.appendChild(toast);
+
+          window.setTimeout(() => toast.remove(), 4500);
+        }
+
+        function setCalculating(isCalculating) {
+          calculateButton.disabled = isCalculating;
+          stateSelect.disabled = isCalculating;
+          connectionTypeSelect.disabled = isCalculating;
+          averageBillValueInput.disabled = isCalculating;
+          calculateSpinner.classList.toggle("hidden", !isCalculating);
+          calculateText.textContent = isCalculating
+            ? "Calculando..."
+            : "Calcular Sistema";
+        }
+
+        function setLogoutLoading(isLoading) {
+          logoutButton.disabled = isLoading;
+          logoutSpinner.classList.toggle("hidden", !isLoading);
+          logoutText.textContent = isLoading ? "Saindo..." : "Sair";
+        }
+
+        function hideAuthLoader() {
+          authLoader.classList.add("pointer-events-none", "opacity-0");
+          window.setTimeout(() => authLoader.classList.add("hidden"), 200);
+        }
+
+        function setPdfText(id, value) {
+          document.getElementById(id).textContent = value;
+        }
+
+        function sanitizeFileName(value) {
+          return (
+            value
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/[^a-zA-Z0-9]+/g, "_")
+              .replace(/^_+|_+$/g, "")
+              .slice(0, 80) || "Cliente"
+          );
+        }
+
+        function setProposalModalOpen(isOpen) {
+          proposalModal.classList.toggle("hidden", !isOpen);
+          proposalModal.classList.toggle("flex", isOpen);
+          document.body.classList.toggle("overflow-hidden", isOpen);
+
+          if (isOpen) {
+            window.requestAnimationFrame(() => proposalClientNameInput.focus());
+          }
+        }
+
+        function setPdfGenerating(isGenerating) {
+          isGeneratingPdf = isGenerating;
+          generatePdfButton.disabled = isGenerating;
+          proposalClientNameInput.disabled = isGenerating;
+          cancelProposalButton.disabled = isGenerating;
+          closeProposalModalButton.disabled = isGenerating;
+          generatePdfSpinner.classList.toggle("hidden", !isGenerating);
+          generatePdfText.textContent = isGenerating
+            ? "Gerando PDF..."
+            : "Gerar e baixar PDF";
+        }
+
+        function clearCalculatedResults() {
+          averageConsumptionInput.value = "";
+          calculationResults.classList.add("hidden");
+        }
+
+        function getAvailabilityKwh(connectionType) {
+          if (connectionType === "residencial_bifasico") {
+            return 50;
+          }
+
+          if (connectionType === "comercial_trifasico") {
+            return 100;
+          }
+
+          return 0;
+        }
+
+        function updateCalculationReferences(state, connectionType) {
+          const stateTariff = STATE_KWH_TARIFFS_2026[state];
+          const availabilityKwh = getAvailabilityKwh(connectionType);
+
+          kwhReference.textContent = stateTariff
+            ? `${currencyFormatter.format(stateTariff)}/kWh`
+            : "Selecione a UF";
+
+          availabilityReference.textContent = availabilityKwh
+            ? `${availabilityKwh} kWh/mês`
+            : "Selecione o tipo de ligação";
+        }
+
+        function calculateSolarSystem() {
+          const state = stateSelect.value;
+          const connectionType = connectionTypeSelect.value;
+          const averageBillValue = Number(averageBillValueInput.value);
+          const stateTariff = STATE_KWH_TARIFFS_2026[state];
+
+          updateCalculationReferences(state, connectionType);
+
+          if (
+            !stateTariff ||
+            !Number.isFinite(averageBillValue) ||
+            averageBillValue <= 0
+          ) {
+            clearCalculatedResults();
+            return null;
+          }
+
+          const averageConsumption = averageBillValue / stateTariff;
+          averageConsumptionInput.value = String(
+            Math.round(averageConsumption * 100) / 100
+          );
+
+          const availabilityKwh = getAvailabilityKwh(connectionType);
+
+          if (!availabilityKwh) {
+            calculationResults.classList.add("hidden");
+            return null;
+          }
+
+          const compensableConsumption = Math.max(
+            averageConsumption - availabilityKwh,
+            0
+          );
+          const systemPowerKwp = compensableConsumption / MONTHLY_SOLAR_FACTOR;
+          const panelCount =
+            systemPowerKwp > 0
+              ? Math.ceil(systemPowerKwp / PANEL_POWER_KWP)
+              : 0;
+          const requiredArea = panelCount * PANEL_AREA_SQUARE_METERS;
+          const investmentValue = systemPowerKwp * COST_PER_KWP;
+          const minimumFee = availabilityKwh * stateTariff;
+          const monthlySavings = Math.max(averageBillValue - minimumFee, 0);
+          const savings25Years =
+            monthlySavings * 12 * PROJECTION_YEARS;
+
+          resultContext.textContent = `${state} • ${
+            connectionType === "residencial_bifasico"
+              ? "Residencial bifásico"
+              : "Comercial trifásico"
+          }`;
+          resultSystemPower.textContent = `${numberFormatter.format(
+            systemPowerKwp
+          )} kWp`;
+          resultPanelCount.textContent = `${panelCount} ${
+            panelCount === 1 ? "placa" : "placas"
+          }`;
+          resultRequiredArea.textContent = `${numberFormatter.format(
+            requiredArea
+          )} m²`;
+          resultInvestment.textContent = currencyFormatter.format(investmentValue);
+          resultCompensableConsumption.textContent = `${numberFormatter.format(
+            compensableConsumption
+          )} kWh/mês`;
+          resultMinimumFee.textContent = `${currencyFormatter.format(
+            minimumFee
+          )}/mês`;
+          resultSavings25Years.textContent = currencyFormatter.format(
+            savings25Years
+          );
+
+          calculationResults.classList.remove("hidden");
+
+          return {
+            state,
+            connectionType,
+            averageBillValue,
+            stateTariff,
+            averageConsumption,
+            availabilityKwh,
+            compensableConsumption,
+            systemPowerKwp,
+            panelCount,
+            requiredArea,
+            investmentValue,
+            minimumFee,
+            monthlySavings,
+            savings25Years,
+          };
+        }
+
+        function getConnectionLabel(connectionType) {
+          return connectionType === "residencial_bifasico"
+            ? "Residencial (Bifásico)"
+            : "Comercial (Trifásico)";
+        }
+
+        function getPaybackText(calculation) {
+          const annualSavings = calculation.monthlySavings * 12;
+
+          if (annualSavings <= 0 || calculation.investmentValue <= 0) {
+            return "Não estimado";
+          }
+
+          const paybackYears = calculation.investmentValue / annualSavings;
+
+          if (paybackYears < 1) {
+            return `${Math.max(1, Math.round(paybackYears * 12))} meses`;
+          }
+
+          return `${numberFormatter.format(paybackYears)} anos`;
+        }
+
+        function populateProposalDocument(clientName, calculation) {
+          const simulationDate = new Date().toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          });
+          const connectionLabel = getConnectionLabel(calculation.connectionType);
+          const paybackText = getPaybackText(calculation);
+          const investmentText = currencyFormatter.format(
+            calculation.investmentValue
+          );
+          const savingsText = currencyFormatter.format(
+            calculation.savings25Years
+          );
+
+          setPdfText("pdf-proposal-date", `Simulação de ${simulationDate}`);
+          setPdfText("pdf-client-name", clientName);
+          setPdfText("pdf-client-state", calculation.state);
+          setPdfText("pdf-connection-type", connectionLabel);
+          setPdfText(
+            "pdf-average-bill",
+            currencyFormatter.format(calculation.averageBillValue)
+          );
+          setPdfText(
+            "pdf-system-power",
+            `${numberFormatter.format(calculation.systemPowerKwp)} kWp`
+          );
+          setPdfText(
+            "pdf-panel-count",
+            `${calculation.panelCount} ${
+              calculation.panelCount === 1 ? "placa" : "placas"
+            }`
+          );
+          setPdfText(
+            "pdf-required-area",
+            `${numberFormatter.format(calculation.requiredArea)} m²`
+          );
+          setPdfText("pdf-investment", investmentText);
+          setPdfText("pdf-savings-25-years", savingsText);
+          setPdfText(
+            "pdf-state-tariff",
+            `${currencyFormatter.format(calculation.stateTariff)}/kWh`
+          );
+          setPdfText(
+            "pdf-average-consumption",
+            `${numberFormatter.format(calculation.averageConsumption)} kWh/mês`
+          );
+          setPdfText(
+            "pdf-availability",
+            `${calculation.availabilityKwh} kWh/mês`
+          );
+          setPdfText("pdf-script-client-name", clientName);
+          setPdfText("pdf-script-investment", investmentText);
+          setPdfText("pdf-script-savings", savingsText);
+          setPdfText("pdf-script-payback", paybackText);
+          setPdfText("pdf-script-investment-inline", investmentText);
+          setPdfText("pdf-script-savings-inline", savingsText);
+          setPdfText("pdf-script-payback-inline", paybackText);
+        }
+
+        async function waitForProposalAssets() {
+          const images = Array.from(proposalDocument.querySelectorAll("img"));
+
+          await Promise.all(
+            images.map((image) => {
+              if (image.complete) {
+                return Promise.resolve();
+              }
+
+              return new Promise((resolve) => {
+                image.addEventListener("load", resolve, { once: true });
+                image.addEventListener("error", resolve, { once: true });
+              });
+            })
+          );
+
+          await new Promise((resolve) => {
+            window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+          });
+        }
+
+        async function generateProposalPdf(clientName) {
+          if (typeof window.html2pdf !== "function") {
+            throw new Error("A biblioteca de geração de PDF não foi carregada.");
+          }
+
+          await waitForProposalAssets();
+
+          const options = {
+            margin: 0,
+            filename: `Proposta_Energisy_${sanitizeFileName(clientName)}.pdf`,
+            image: {
+              type: "jpeg",
+              quality: 0.98,
+            },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              backgroundColor: "#ffffff",
+              logging: false,
+            },
+            jsPDF: {
+              unit: "mm",
+              format: "a4",
+              orientation: "portrait",
+            },
+            pagebreak: {
+              mode: ["css", "legacy"],
+            },
+          };
+
+          await window.html2pdf().set(options).from(proposalDocument).save();
+        }
+
+        async function initializePage() {
+          if (!window.isSupabaseConfigured || !window.supabaseClient) {
+            authLoaderText.textContent = "Supabase não configurado. Redirecionando...";
+            window.location.replace("index.html");
+            return;
+          }
+
+          try {
+            const {
+              data: { session },
+              error,
+            } = await window.supabaseClient.auth.getSession();
+
+            if (error) {
+              throw error;
+            }
+
+            if (!session) {
+              authLoaderText.textContent = "Sessão não encontrada. Redirecionando...";
+              window.location.replace("index.html");
+              return;
+            }
+
+            const userEmail = session.user?.email || "Usuário autenticado";
+            sidebarUserEmail.textContent = userEmail;
+            headerUserGreeting.textContent = window.EnergisyAuth.getGreeting(session.user);
+            hideAuthLoader();
+          } catch (error) {
+            authLoaderText.textContent = "Não foi possível validar sua sessão. Redirecionando...";
+            window.location.replace("index.html");
+          }
+        }
+
+        averageBillValueInput.addEventListener("input", calculateSolarSystem);
+        stateSelect.addEventListener("change", calculateSolarSystem);
+        connectionTypeSelect.addEventListener("change", calculateSolarSystem);
+
+        openPdfModalButton.addEventListener("click", () => {
+          const calculation = calculateSolarSystem();
+
+          if (!calculation) {
+            showToast("Preencha todos os campos antes de gerar a proposta.");
+            return;
+          }
+
+          proposalDataForm.reset();
+          setProposalModalOpen(true);
+        });
+
+        closeProposalModalButton.addEventListener("click", () => {
+          if (!isGeneratingPdf) {
+            setProposalModalOpen(false);
+          }
+        });
+
+        cancelProposalButton.addEventListener("click", () => {
+          if (!isGeneratingPdf) {
+            setProposalModalOpen(false);
+          }
+        });
+
+        proposalModal.addEventListener("click", (event) => {
+          if (event.target === proposalModal && !isGeneratingPdf) {
+            setProposalModalOpen(false);
+          }
+        });
+
+        proposalDataForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          if (!proposalDataForm.checkValidity()) {
+            proposalDataForm.reportValidity();
+            return;
+          }
+
+          const calculation = calculateSolarSystem();
+
+          if (!calculation) {
+            showToast("Os dados da simulação não estão mais disponíveis.");
+            setProposalModalOpen(false);
+            return;
+          }
+
+          const clientName = proposalClientNameInput.value.trim();
+          let generatedSuccessfully = false;
+          setPdfGenerating(true);
+
+          try {
+            populateProposalDocument(clientName, calculation);
+            await generateProposalPdf(clientName);
+            generatedSuccessfully = true;
+            showToast("Proposta gerada e download iniciado!", "success");
+          } catch (error) {
+            showToast(error?.message || "Não foi possível gerar a proposta em PDF.");
+          } finally {
+            setPdfGenerating(false);
+
+            if (generatedSuccessfully) {
+              setProposalModalOpen(false);
+            }
+          }
+        });
+
+        calculatorForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          if (!calculatorForm.checkValidity()) {
+            calculatorForm.reportValidity();
+            return;
+          }
+
+          const calculation = calculateSolarSystem();
+
+          if (!calculation) {
+            showToast("Preencha todos os campos para calcular o sistema.");
+            return;
+          }
+
+          setCalculating(true);
+
+          try {
+            await new Promise((resolve) => {
+              window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+            });
+            calculationResults.scrollIntoView({ behavior: "smooth", block: "start" });
+            showToast("Dimensionamento atualizado com sucesso!", "success");
+          } finally {
+            setCalculating(false);
+          }
+        });
+
+        menuButton.addEventListener("click", () => setMenuOpen(true));
+        closeMenuButton.addEventListener("click", () => setMenuOpen(false));
+        menuBackdrop.addEventListener("click", () => setMenuOpen(false));
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            if (!proposalModal.classList.contains("hidden") && !isGeneratingPdf) {
+              setProposalModalOpen(false);
+              return;
+            }
+
+            setMenuOpen(false);
+          }
+        });
+
+        sidebar.querySelectorAll("nav a").forEach((link) => {
+          link.addEventListener("click", () => setMenuOpen(false));
+        });
+
+        logoutButton.addEventListener("click", async () => {
+          setLogoutLoading(true);
+
+          try {
+            const { error } = await window.supabaseClient.auth.signOut();
+
+            if (error) {
+              throw error;
+            }
+
+            showToast("Sessão encerrada com sucesso.", "success");
+
+            window.setTimeout(() => {
+              window.location.replace("index.html");
+            }, 600);
+          } catch (error) {
+            showToast(error?.message || "Não foi possível encerrar a sessão.");
+            setLogoutLoading(false);
+          }
+        });
+
+        window.addEventListener("load", initializePage);
+      })();
+    </script>
+  </body>
+</html>

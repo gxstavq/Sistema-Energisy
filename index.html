@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Acesse o Sistema Energisy para gerenciar clientes, propostas e indicações."
+    />
+    <title>Login | Energisy</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+
+  <body class="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased">
+    <main class="min-h-screen lg:grid lg:grid-cols-2">
+      <section
+        class="relative hidden overflow-hidden bg-blue-900 p-12 text-white lg:flex lg:flex-col lg:justify-between"
+        aria-label="Apresentação do Sistema Energisy"
+      >
+        <div
+          class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-yellow-400/20"
+          aria-hidden="true"
+        ></div>
+        <div
+          class="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-blue-700/40"
+          aria-hidden="true"
+        ></div>
+
+        <div class="relative my-auto max-w-xl">
+          <p class="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-white">
+            Energia para seus resultados
+          </p>
+          <h1 class="text-4xl font-bold leading-tight xl:text-5xl">
+            Sua operação comercial, simples e conectada.
+          </h1>
+          <p class="mt-6 max-w-lg text-lg leading-relaxed text-white">
+            Gerencie clientes, propostas e indicações em um só lugar e mantenha
+            seu time focado no que mais importa: vender.
+          </p>
+        </div>
+
+        <p class="relative text-sm text-white">
+          &copy; <span id="current-year"></span> Energisy. Todos os direitos reservados.
+        </p>
+      </section>
+
+      <section class="flex min-h-screen items-center justify-center px-4 py-10 sm:px-6 lg:px-12">
+        <div class="w-full max-w-md">
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-md sm:p-8">
+            <img
+              src="logoenergisy.PNG"
+              alt="Energisy Soluções"
+              class="mx-auto mb-6 h-auto w-40 object-contain"
+            />
+
+            <header class="mb-7">
+              <h2 class="text-2xl font-bold tracking-tight text-slate-900">Bem-vindo de volta</h2>
+              <p class="mt-2 text-sm leading-relaxed text-slate-500">
+                Entre com suas credenciais para acessar o sistema.
+              </p>
+            </header>
+
+            <div
+              id="alert"
+              class="mb-5 hidden rounded-lg border px-4 py-3 text-sm"
+              role="alert"
+              aria-live="assertive"
+            ></div>
+
+            <form id="login-form" class="space-y-5">
+              <div>
+                <label for="email" class="mb-2 block text-sm font-medium text-slate-700">
+                  E-mail
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autocomplete="email"
+                  required
+                  placeholder="voce@empresa.com"
+                  class="block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-800 focus:ring-4 focus:ring-blue-100"
+                />
+              </div>
+
+              <div>
+                <label for="password" class="mb-2 block text-sm font-medium text-slate-700">
+                  Senha
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  required
+                  minlength="6"
+                  placeholder="Digite sua senha"
+                  class="block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-800 focus:ring-4 focus:ring-blue-100"
+                />
+              </div>
+
+              <button
+                id="submit-button"
+                type="submit"
+                class="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-800 px-4 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <span
+                  id="loading-spinner"
+                  class="hidden h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                  aria-hidden="true"
+                ></span>
+                <span id="button-text">Entrar</span>
+              </button>
+            </form>
+          </div>
+
+          <p class="mt-6 text-center text-xs leading-relaxed text-slate-400">
+            Acesso seguro ao Sistema Energisy.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+      (() => {
+        "use strict";
+
+        const loginForm = document.getElementById("login-form");
+        const emailInput = document.getElementById("email");
+        const passwordInput = document.getElementById("password");
+        const submitButton = document.getElementById("submit-button");
+        const buttonText = document.getElementById("button-text");
+        const loadingSpinner = document.getElementById("loading-spinner");
+        const alertBox = document.getElementById("alert");
+
+        document.getElementById("current-year").textContent = new Date().getFullYear();
+
+        function setLoading(isLoading) {
+          submitButton.disabled = isLoading;
+          emailInput.disabled = isLoading;
+          passwordInput.disabled = isLoading;
+          buttonText.textContent = isLoading ? "Entrando..." : "Entrar";
+          loadingSpinner.classList.toggle("hidden", !isLoading);
+        }
+
+        function showAlert(message, type = "error") {
+          const styles = {
+            error: ["border-red-200", "bg-red-50", "text-red-700"],
+            success: ["border-blue-200", "bg-blue-50", "text-blue-800"],
+          };
+
+          alertBox.className = "mb-5 rounded-lg border px-4 py-3 text-sm";
+          alertBox.classList.add(...styles[type]);
+          alertBox.textContent = message;
+        }
+
+        function hideAlert() {
+          alertBox.classList.add("hidden");
+          alertBox.textContent = "";
+        }
+
+        loginForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          hideAlert();
+
+          if (!loginForm.checkValidity()) {
+            loginForm.reportValidity();
+            return;
+          }
+
+          if (!window.isSupabaseConfigured) {
+            showAlert("Configure a URL e a chave pública do Supabase em supabase-config.js.");
+            return;
+          }
+
+          setLoading(true);
+
+          try {
+            const { error } = await window.supabaseClient.auth.signInWithPassword({
+              email: emailInput.value.trim(),
+              password: passwordInput.value,
+            });
+
+            if (error) {
+              throw error;
+            }
+
+            showAlert("Login realizado com sucesso. Redirecionando...", "success");
+
+            window.setTimeout(() => {
+              window.location.href = "dashboard.html";
+            }, 700);
+          } catch (error) {
+            const message =
+              error?.message === "Invalid login credentials"
+                ? "E-mail ou senha incorretos. Verifique os dados e tente novamente."
+                : error?.message || "Não foi possível entrar. Tente novamente em instantes.";
+
+            showAlert(message);
+            setLoading(false);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

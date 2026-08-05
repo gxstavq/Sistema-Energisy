@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Configurações comerciais locais do Sistema Energisy."
+    />
+    <title>Configurações | Energisy</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+
+  <body class="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased">
+    <div
+      id="auth-loader"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-50 transition-opacity duration-200"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="text-center">
+        <span
+          class="mx-auto block h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-blue-800"
+          aria-hidden="true"
+        ></span>
+        <p id="auth-loader-text" class="mt-4 text-sm font-medium text-slate-600">
+          Verificando acesso...
+        </p>
+      </div>
+    </div>
+
+    <div
+      id="toast-container"
+      class="pointer-events-none fixed right-4 top-4 z-[110] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-3"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
+
+    <div
+      id="menu-backdrop"
+      class="fixed inset-0 z-40 hidden bg-slate-950/40 backdrop-blur-sm lg:hidden"
+      aria-hidden="true"
+    ></div>
+
+    <aside
+      id="sidebar"
+      class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-300 ease-in-out lg:translate-x-0 lg:shadow-sm"
+      aria-label="Navegação principal"
+    >
+      <div class="relative border-b border-slate-100 px-6 pt-4">
+        <a href="dashboard.html" class="block" aria-label="Energisy - Dashboard">
+          <img
+            src="logoenergisy.PNG"
+            alt="Energisy Soluções"
+            class="mx-auto mb-4 h-auto w-32 object-contain"
+          />
+        </a>
+
+        <button
+          id="close-menu-button"
+          type="button"
+          class="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-lg text-2xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 lg:hidden"
+          aria-label="Fechar menu"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto px-4 py-6">
+        <p class="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          Menu principal
+        </p>
+
+        <ul class="space-y-1.5">
+          <li>
+            <a
+              href="dashboard.html"
+              class="group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-500 transition group-hover:bg-yellow-400 group-hover:text-blue-900"
+                aria-hidden="true"
+              >D</span>
+              Dashboard
+            </a>
+          </li>
+          <li>
+            <a
+              href="novo-cliente.html"
+              class="group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-lg font-bold text-slate-500 transition group-hover:bg-yellow-400 group-hover:text-blue-900"
+                aria-hidden="true"
+              >+</span>
+              Novo Cliente
+            </a>
+          </li>
+          <li>
+            <a
+              href="crm.html"
+              class="group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-500 transition group-hover:bg-yellow-400 group-hover:text-blue-900"
+                aria-hidden="true"
+              >CRM</span>
+              CRM
+            </a>
+          </li>
+          <li>
+            <a
+              href="simulador.html"
+              class="group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-base font-bold text-slate-500 transition group-hover:bg-yellow-400 group-hover:text-blue-900"
+                aria-hidden="true"
+              >%</span>
+              Simulador
+            </a>
+          </li>
+          <li>
+            <a
+              href="followup.html"
+              class="group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-lg font-semibold text-slate-500 transition group-hover:bg-yellow-400 group-hover:text-blue-900"
+                aria-hidden="true"
+              >&nearr;</span>
+              Follow-up
+            </a>
+          </li>
+          <li>
+            <a
+              href="configuracoes.html"
+              class="flex items-center gap-3 rounded-xl bg-blue-50 px-3 py-3 text-sm font-semibold text-blue-900"
+              aria-current="page"
+            >
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-400 text-lg font-bold text-blue-900"
+                aria-hidden="true"
+              >&#9881;</span>
+              Configurações
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="border-t border-slate-100 p-4">
+        <div class="mb-3 rounded-xl bg-slate-50 px-3 py-3">
+          <p class="text-xs font-medium text-slate-400">Conectado como</p>
+          <p
+            id="sidebar-user-email"
+            class="mt-1 truncate text-sm font-semibold text-slate-700"
+          >
+            Usuário Energisy
+          </p>
+        </div>
+
+        <button
+          id="logout-button"
+          type="button"
+          class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-4 focus:ring-red-100 disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          <span
+            id="logout-spinner"
+            class="hidden h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current"
+            aria-hidden="true"
+          ></span>
+          <span id="logout-text">Sair</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="min-h-screen lg:ml-72">
+      <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div class="flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div class="flex items-center gap-3">
+            <button
+              id="menu-button"
+              type="button"
+              class="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100 lg:hidden"
+              aria-label="Abrir menu"
+              aria-controls="sidebar"
+              aria-expanded="false"
+            >
+              <span class="space-y-1.5" aria-hidden="true">
+                <span class="block h-0.5 w-5 rounded bg-current"></span>
+                <span class="block h-0.5 w-5 rounded bg-current"></span>
+                <span class="block h-0.5 w-5 rounded bg-current"></span>
+              </span>
+            </button>
+
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wider text-slate-400">
+                Preferências comerciais
+              </p>
+              <p
+                id="header-user-greeting"
+                class="max-w-36 truncate text-sm font-semibold text-slate-700 sm:max-w-64"
+              >
+                Boas-vindas, Usuário
+              </p>
+            </div>
+          </div>
+
+          <span class="hidden rounded-full bg-blue-900 px-3 py-1.5 text-xs font-semibold text-white sm:inline-flex">
+            Salvo neste dispositivo
+          </span>
+        </div>
+      </header>
+
+      <div class="px-4 py-7 sm:px-6 sm:py-9 lg:px-8">
+        <section class="mx-auto max-w-4xl" aria-labelledby="page-title">
+          <div>
+            <p class="text-sm font-semibold text-blue-800">Sistema Energisy</p>
+            <h1
+              id="page-title"
+              class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"
+            >
+              Configurações
+            </h1>
+            <p class="mt-2 text-sm leading-relaxed text-slate-500">
+              Ajuste os valores de referência conforme a região atendida pelo vendedor.
+            </p>
+          </div>
+
+          <div class="mt-7 rounded-2xl border border-yellow-200 bg-yellow-50 p-5 shadow-sm">
+            <div class="flex gap-3">
+              <span
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-yellow-400 text-lg font-bold text-blue-900"
+                aria-hidden="true"
+              >!</span>
+              <div>
+                <h2 class="font-bold text-blue-900">Configuração específica deste dispositivo</h2>
+                <p class="mt-1 text-sm leading-relaxed text-slate-600">
+                  Estes valores ficam somente neste navegador. Eles não são enviados ao
+                  Supabase nem sincronizados com outros celulares ou computadores.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-100 px-5 py-5 sm:px-7">
+              <div class="flex items-center gap-3">
+                <span
+                  class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-900 text-lg font-bold text-yellow-400"
+                  aria-hidden="true"
+                >R$</span>
+                <div>
+                  <h2 class="font-bold text-slate-900">Valores comerciais</h2>
+                  <p class="mt-0.5 text-xs text-slate-500">
+                    Os dois campos são obrigatórios e aceitam valores a partir de zero.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <form id="settings-form" class="p-5 sm:p-7">
+              <div class="grid gap-6 md:grid-cols-2">
+                <div>
+                  <label
+                    for="valor-kwh-regiao"
+                    class="mb-2 block text-sm font-semibold text-slate-700"
+                  >
+                    Valor do kWh na Região (R$)
+                    <span class="text-red-600" aria-hidden="true">*</span>
+                  </label>
+                  <input
+                    id="valor-kwh-regiao"
+                    name="valor_kwh_regiao"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="0.01"
+                    required
+                    placeholder="0,95"
+                    class="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-800 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                  />
+                  <p class="mt-2 text-xs text-slate-400">
+                    Referência para estimar a economia de energia do cliente.
+                  </p>
+                </div>
+
+                <div>
+                  <label
+                    for="valor-base-placas"
+                    class="mb-2 block text-sm font-semibold text-slate-700"
+                  >
+                    Valor Base das Placas Solares (R$)
+                    <span class="text-red-600" aria-hidden="true">*</span>
+                  </label>
+                  <input
+                    id="valor-base-placas"
+                    name="valor_base_placas"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="0.01"
+                    required
+                    placeholder="40,00"
+                    class="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-800 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                  />
+                  <p class="mt-2 text-xs text-slate-400">
+                    Valor-base usado na estimativa comercial do projeto fotovoltaico.
+                  </p>
+                </div>
+              </div>
+
+              <div class="mt-7 flex justify-end border-t border-slate-100 pt-6">
+                <button
+                  id="save-button"
+                  type="submit"
+                  class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-800 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+                >
+                  <span
+                    id="save-spinner"
+                    class="hidden h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                    aria-hidden="true"
+                  ></span>
+                  <span id="save-text">Salvar Configurações</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="auth-utils.js"></script>
+    <script>
+      (() => {
+        "use strict";
+
+        const SETTINGS_STORAGE_KEY = "energisy_configuracoes";
+        const DEFAULT_SETTINGS = {
+          valor_kwh_regiao: 0.95,
+          valor_base_placas: 40,
+        };
+
+        const authLoader = document.getElementById("auth-loader");
+        const authLoaderText = document.getElementById("auth-loader-text");
+        const sidebar = document.getElementById("sidebar");
+        const menuBackdrop = document.getElementById("menu-backdrop");
+        const menuButton = document.getElementById("menu-button");
+        const closeMenuButton = document.getElementById("close-menu-button");
+        const logoutButton = document.getElementById("logout-button");
+        const logoutSpinner = document.getElementById("logout-spinner");
+        const logoutText = document.getElementById("logout-text");
+        const sidebarUserEmail = document.getElementById("sidebar-user-email");
+        const headerUserGreeting = document.getElementById("header-user-greeting");
+        const toastContainer = document.getElementById("toast-container");
+        const settingsForm = document.getElementById("settings-form");
+        const valorKwhInput = document.getElementById("valor-kwh-regiao");
+        const valorBasePlacasInput = document.getElementById("valor-base-placas");
+        const saveButton = document.getElementById("save-button");
+        const saveSpinner = document.getElementById("save-spinner");
+        const saveText = document.getElementById("save-text");
+
+        function setMenuOpen(isOpen) {
+          sidebar.classList.toggle("-translate-x-full", !isOpen);
+          menuBackdrop.classList.toggle("hidden", !isOpen);
+          menuButton.setAttribute("aria-expanded", String(isOpen));
+          document.body.classList.toggle("overflow-hidden", isOpen);
+        }
+
+        function showToast(message, type = "error") {
+          const toast = document.createElement("div");
+          const styles = {
+            error: "border-red-700 bg-red-600 text-white",
+            success: "border-green-700 bg-green-600 text-white",
+          };
+
+          toast.className = `pointer-events-auto rounded-xl border px-4 py-3 text-sm font-semibold shadow-md ${styles[type]}`;
+          toast.setAttribute("role", type === "error" ? "alert" : "status");
+          toast.textContent = message;
+          toastContainer.appendChild(toast);
+
+          window.setTimeout(() => toast.remove(), 4500);
+        }
+
+        function setSaving(isSaving) {
+          saveButton.disabled = isSaving;
+          valorKwhInput.disabled = isSaving;
+          valorBasePlacasInput.disabled = isSaving;
+          saveSpinner.classList.toggle("hidden", !isSaving);
+          saveText.textContent = isSaving ? "Salvando..." : "Salvar Configurações";
+        }
+
+        function setLogoutLoading(isLoading) {
+          logoutButton.disabled = isLoading;
+          logoutSpinner.classList.toggle("hidden", !isLoading);
+          logoutText.textContent = isLoading ? "Saindo..." : "Sair";
+        }
+
+        function hideAuthLoader() {
+          authLoader.classList.add("pointer-events-none", "opacity-0");
+          window.setTimeout(() => authLoader.classList.add("hidden"), 200);
+        }
+
+        function applySettings(settings) {
+          valorKwhInput.value = Number(settings.valor_kwh_regiao).toFixed(2);
+          valorBasePlacasInput.value = Number(settings.valor_base_placas).toFixed(2);
+        }
+
+        function loadSettings() {
+          try {
+            const savedValue = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+
+            if (!savedValue) {
+              applySettings(DEFAULT_SETTINGS);
+              return;
+            }
+
+            const savedSettings = JSON.parse(savedValue);
+            const valorKwh = Number(savedSettings.valor_kwh_regiao);
+            const valorBasePlacas = Number(savedSettings.valor_base_placas);
+
+            if (
+              !Number.isFinite(valorKwh) ||
+              valorKwh < 0 ||
+              !Number.isFinite(valorBasePlacas) ||
+              valorBasePlacas < 0
+            ) {
+              throw new Error("As configurações salvas são inválidas.");
+            }
+
+            applySettings({
+              valor_kwh_regiao: valorKwh,
+              valor_base_placas: valorBasePlacas,
+            });
+          } catch (error) {
+            applySettings(DEFAULT_SETTINGS);
+            showToast(
+              "Não foi possível carregar as configurações salvas. Os valores padrão foram restaurados."
+            );
+          }
+        }
+
+        async function protectPage() {
+          if (!window.isSupabaseConfigured || !window.supabaseClient) {
+            authLoaderText.textContent = "Supabase não configurado. Redirecionando...";
+            window.location.replace("index.html");
+            return;
+          }
+
+          try {
+            const {
+              data: { session },
+              error,
+            } = await window.supabaseClient.auth.getSession();
+
+            if (error) {
+              throw error;
+            }
+
+            if (!session) {
+              authLoaderText.textContent = "Sessão não encontrada. Redirecionando...";
+              window.location.replace("index.html");
+              return;
+            }
+
+            const userEmail = session.user?.email || "Usuário autenticado";
+            sidebarUserEmail.textContent = userEmail;
+            headerUserGreeting.textContent = window.EnergisyAuth.getGreeting(session.user);
+            loadSettings();
+            hideAuthLoader();
+          } catch (error) {
+            authLoaderText.textContent = "Não foi possível validar sua sessão. Redirecionando...";
+            window.location.replace("index.html");
+          }
+        }
+
+        settingsForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          if (!settingsForm.checkValidity()) {
+            settingsForm.reportValidity();
+            return;
+          }
+
+          const valorKwh = Number(valorKwhInput.value);
+          const valorBasePlacas = Number(valorBasePlacasInput.value);
+
+          if (
+            !Number.isFinite(valorKwh) ||
+            valorKwh < 0 ||
+            !Number.isFinite(valorBasePlacas) ||
+            valorBasePlacas < 0
+          ) {
+            showToast("Informe valores numéricos válidos e maiores ou iguais a zero.");
+            return;
+          }
+
+          setSaving(true);
+
+          try {
+            await new Promise((resolve) => window.requestAnimationFrame(resolve));
+
+            window.localStorage.setItem(
+              SETTINGS_STORAGE_KEY,
+              JSON.stringify({
+                valor_kwh_regiao: valorKwh,
+                valor_base_placas: valorBasePlacas,
+              })
+            );
+
+            applySettings({
+              valor_kwh_regiao: valorKwh,
+              valor_base_placas: valorBasePlacas,
+            });
+            showToast("Configurações salvas neste dispositivo!", "success");
+          } catch (error) {
+            showToast("Não foi possível salvar as configurações neste navegador.");
+          } finally {
+            setSaving(false);
+          }
+        });
+
+        menuButton.addEventListener("click", () => setMenuOpen(true));
+        closeMenuButton.addEventListener("click", () => setMenuOpen(false));
+        menuBackdrop.addEventListener("click", () => setMenuOpen(false));
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            setMenuOpen(false);
+          }
+        });
+
+        sidebar.querySelectorAll("nav a").forEach((link) => {
+          link.addEventListener("click", () => setMenuOpen(false));
+        });
+
+        logoutButton.addEventListener("click", async () => {
+          setLogoutLoading(true);
+
+          try {
+            const { error } = await window.supabaseClient.auth.signOut();
+
+            if (error) {
+              throw error;
+            }
+
+            showToast("Sessão encerrada com sucesso.", "success");
+
+            window.setTimeout(() => {
+              window.location.replace("index.html");
+            }, 600);
+          } catch (error) {
+            showToast(error?.message || "Não foi possível encerrar a sessão.");
+            setLogoutLoading(false);
+          }
+        });
+
+        window.addEventListener("load", protectPage);
+      })();
+    </script>
+  </body>
+</html>
