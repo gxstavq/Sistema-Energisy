@@ -618,13 +618,46 @@
             saveNotesButton,
             notesFeedback
           );
+
+          const deleteDivider = document.createElement("div");
+          deleteDivider.className = "my-4 border-t border-slate-100";
+
+          const deleteButton = document.createElement("button");
+          deleteButton.type = "button";
+          deleteButton.setAttribute(
+            "aria-label",
+            `Excluir ${client.nome || "cliente"}`
+          );
+          deleteButton.className =
+            "flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100 focus:outline-none focus:ring-4 focus:ring-red-100 disabled:cursor-wait disabled:opacity-70";
+
+          const deleteSpinner = document.createElement("span");
+          deleteSpinner.className =
+            "hidden h-4 w-4 animate-spin rounded-full border-2 border-red-300 border-t-red-700";
+          deleteSpinner.setAttribute("aria-hidden", "true");
+
+          const deleteText = document.createElement("span");
+          deleteText.textContent = "Excluir";
+
+          deleteButton.append(deleteSpinner, deleteText);
+          deleteButton.addEventListener("click", () => {
+            deleteClient(
+              client.id,
+              deleteButton,
+              deleteSpinner,
+              deleteText
+            );
+          });
+
           card.append(
             name,
             details,
             divider,
             selectWrapper,
             notesDivider,
-            notesWrapper
+            notesWrapper,
+            deleteDivider,
+            deleteButton
           );
           return card;
         }
@@ -775,6 +808,45 @@
             textarea.disabled = false;
             spinner.classList.add("hidden");
             buttonText.textContent = "Salvar observações";
+          }
+        }
+
+        async function deleteClient(clientId, button, spinner, buttonText) {
+          const confirmed = window.confirm(
+            "Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita."
+          );
+
+          if (!confirmed) {
+            return;
+          }
+
+          button.disabled = true;
+          spinner.classList.remove("hidden");
+          buttonText.textContent = "Excluindo...";
+
+          try {
+            const { error } = await window.supabaseClient
+              .from("clientes")
+              .delete()
+              .eq("id", clientId)
+              .eq("user_id", currentUser.id)
+              .select("id")
+              .single();
+
+            if (error) {
+              throw error;
+            }
+
+            showToast("Cliente excluído com sucesso!", "success");
+            await loadClients();
+          } catch (error) {
+            showToast(error?.message || "Não foi possível excluir o cliente.");
+          } finally {
+            if (button.isConnected) {
+              button.disabled = false;
+              spinner.classList.add("hidden");
+              buttonText.textContent = "Excluir";
+            }
           }
         }
 

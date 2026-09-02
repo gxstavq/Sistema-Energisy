@@ -229,9 +229,6 @@
               </p>
             </div>
 
-            <span class="w-fit rounded-lg border border-yellow-400 bg-yellow-400 px-3 py-2 text-xs font-semibold text-blue-900 shadow-sm">
-              Dados demonstrativos
-            </span>
           </div>
 
           <div class="mt-7 grid gap-5 md:grid-cols-3">
@@ -239,7 +236,10 @@
               <div class="flex items-start justify-between gap-4">
                 <div>
                   <p class="text-sm font-medium text-slate-500">Total de Leads</p>
-                  <p class="mt-3 text-3xl font-bold tracking-tight text-slate-900">124</p>
+                  <p
+                    id="total-leads"
+                    class="mt-3 text-3xl font-bold tracking-tight text-slate-900"
+                  >0</p>
                 </div>
                 <span
                   class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-800 text-sm font-bold text-white"
@@ -255,7 +255,10 @@
               <div class="flex items-start justify-between gap-4">
                 <div>
                   <p class="text-sm font-medium text-slate-500">Propostas Geradas</p>
-                  <p class="mt-3 text-3xl font-bold tracking-tight text-slate-900">38</p>
+                  <p
+                    id="propostas-geradas"
+                    class="mt-3 text-3xl font-bold tracking-tight text-slate-900"
+                  >0</p>
                 </div>
                 <span
                   class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-yellow-400 text-sm font-bold text-blue-900"
@@ -271,7 +274,10 @@
               <div class="flex items-start justify-between gap-4">
                 <div>
                   <p class="text-sm font-medium text-slate-500">Valor em Negociação</p>
-                  <p class="mt-3 text-3xl font-bold tracking-tight text-slate-900">R$ 485,7 mil</p>
+                  <p
+                    id="valor-negociacao"
+                    class="mt-3 text-3xl font-bold tracking-tight text-slate-900"
+                  >R$ 0,00</p>
                 </div>
                 <span
                   class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-900 text-base font-bold text-white ring-4 ring-yellow-400/30"
@@ -306,6 +312,34 @@
         const sidebarUserEmail = document.getElementById("sidebar-user-email");
         const headerUserGreeting = document.getElementById("header-user-greeting");
         const toastContainer = document.getElementById("toast-container");
+        const totalLeadsElement = document.getElementById("total-leads");
+        const propostasGeradasElement = document.getElementById("propostas-geradas");
+        const valorNegociacaoElement = document.getElementById("valor-negociacao");
+
+        const PROPOSAL_STATUSES = new Set([
+          "proposta",
+          "proposta gerada",
+          "proposta enviada",
+          "em negociacao",
+          "negociacao",
+          "fechado",
+        ]);
+
+        const LOST_STATUSES = new Set([
+          "desistencia",
+          "perdido",
+          "perdida",
+          "perda",
+          "cancelado",
+          "cancelada",
+          "rejeitado",
+          "rejeitada",
+        ]);
+
+        const brlFormatter = new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        });
 
         function setMenuOpen(isOpen) {
           sidebar.classList.toggle("-translate-x-full", !isOpen);
@@ -342,6 +376,48 @@
           window.setTimeout(() => authLoader.classList.add("hidden"), 200);
         }
 
+        function normalizeStatus(status) {
+          return String(status || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim()
+            .toLocaleLowerCase("pt-BR");
+        }
+
+        function renderDashboardMetrics(clients) {
+          const totalLeads = clients.length;
+          const propostasGeradas = clients.filter((client) =>
+            PROPOSAL_STATUSES.has(normalizeStatus(client.status))
+          ).length;
+          const valorEmNegociacao = clients.reduce((total, client) => {
+            const status = normalizeStatus(client.status);
+
+            if (LOST_STATUSES.has(status)) {
+              return total;
+            }
+
+            const valorProjeto = Number(client.valor_projeto);
+            return total + (Number.isFinite(valorProjeto) ? valorProjeto : 0);
+          }, 0);
+
+          totalLeadsElement.textContent = String(totalLeads);
+          propostasGeradasElement.textContent = String(propostasGeradas);
+          valorNegociacaoElement.textContent = brlFormatter.format(valorEmNegociacao);
+        }
+
+        async function loadDashboardMetrics(userId) {
+          const { data: clients, error } = await window.supabaseClient
+            .from("clients")
+            .select("*")
+            .eq("user_id", userId);
+
+          if (error) {
+            throw error;
+          }
+
+          renderDashboardMetrics(clients || []);
+        }
+
         async function protectDashboard() {
           if (!window.isSupabaseConfigured || !window.supabaseClient) {
             authLoaderText.textContent = "Supabase não configurado. Redirecionando...";
@@ -368,6 +444,14 @@
             const userEmail = session.user?.email || "Usuário autenticado";
             sidebarUserEmail.textContent = userEmail;
             headerUserGreeting.textContent = window.EnergisyAuth.getGreeting(session.user);
+
+            try {
+              await loadDashboardMetrics(session.user.id);
+            } catch (error) {
+              console.error("Erro ao carregar métricas do dashboard:", error);
+              showToast(error?.message || "Não foi possível carregar os dados do dashboard.");
+            }
+
             hideAuthLoader();
           } catch (error) {
             authLoaderText.textContent = "Não foi possível validar sua sessão. Redirecionando...";

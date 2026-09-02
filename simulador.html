@@ -26,14 +26,25 @@
       #proposal-capture {
         position: fixed;
         top: 0;
-        left: -12000px;
-        z-index: -1;
-        width: 210mm;
+        left: 0;
+        z-index: 9999;
+        width: 800px;
+        height: 1120px;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
         background: #ffffff;
+        pointer-events: none;
+        visibility: hidden;
+      }
+
+      #proposal-capture.pdf-export-active {
+        visibility: visible;
       }
 
       .pdf-document {
-        width: 210mm;
+        width: 800px;
+        margin: 0;
         background: #ffffff;
         color: #0f172a;
         font-family: Arial, Helvetica, sans-serif;
@@ -41,8 +52,11 @@
 
       .pdf-page {
         box-sizing: border-box;
-        width: 210mm;
-        min-height: 297mm;
+        width: 800px;
+        height: 1120px;
+        min-height: 1120px;
+        max-height: 1120px;
+        margin: 0;
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -102,7 +116,7 @@
 
       .pdf-content {
         flex: 1;
-        padding: 10mm 15mm 8mm;
+        padding: 7mm 15mm 6mm;
       }
 
       .pdf-kicker {
@@ -190,8 +204,11 @@
 
       .pdf-data-card strong {
         margin-top: 2mm;
+        overflow: hidden;
         color: #1e293b;
         font-size: 11px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .pdf-metric-card strong {
@@ -1079,7 +1096,7 @@
           <footer class="pdf-footer">
             <strong>Energisy Soluções</strong>
             <span>Energia limpa, economia e futuro.</span>
-            <span>Página 1 de 2</span>
+            <span>Página 1 de 1</span>
           </footer>
         </article>
 
@@ -1568,8 +1585,8 @@
           setPdfText("pdf-script-payback-inline", paybackText);
         }
 
-        async function waitForProposalAssets() {
-          const images = Array.from(proposalDocument.querySelectorAll("img"));
+        async function waitForProposalAssets(element = proposalDocument) {
+          const images = Array.from(element.querySelectorAll("img"));
 
           await Promise.all(
             images.map((image) => {
@@ -1594,7 +1611,54 @@
             throw new Error("A biblioteca de geração de PDF não foi carregada.");
           }
 
-          await waitForProposalAssets();
+          const EXPORT_WIDTH = 800;
+          const EXPORT_HEIGHT = 1120;
+          const proposalCapture = document.getElementById("proposal-capture");
+          const simulationPage = proposalDocument.querySelector(".pdf-page");
+
+          if (!proposalCapture || !simulationPage) {
+            throw new Error("O conteúdo da simulação não foi encontrado.");
+          }
+
+          const previousDocumentWidth = proposalDocument.style.width;
+          const previousPageWidth = simulationPage.style.width;
+          const previousPageHeight = simulationPage.style.height;
+          const previousPageMinHeight = simulationPage.style.minHeight;
+          const previousPageMaxHeight = simulationPage.style.maxHeight;
+
+          const restoreExportArea = () => {
+            proposalCapture.classList.remove("pdf-export-active");
+            proposalDocument.style.width = previousDocumentWidth;
+            simulationPage.style.width = previousPageWidth;
+            simulationPage.style.height = previousPageHeight;
+            simulationPage.style.minHeight = previousPageMinHeight;
+            simulationPage.style.maxHeight = previousPageMaxHeight;
+          };
+
+          proposalCapture.classList.add("pdf-export-active");
+          proposalDocument.style.width = `${EXPORT_WIDTH}px`;
+          simulationPage.style.width = `${EXPORT_WIDTH}px`;
+          simulationPage.style.height = `${EXPORT_HEIGHT}px`;
+          simulationPage.style.minHeight = `${EXPORT_HEIGHT}px`;
+          simulationPage.style.maxHeight = `${EXPORT_HEIGHT}px`;
+
+          try {
+            if (document.fonts?.ready) {
+              await document.fonts.ready;
+            }
+
+            await waitForProposalAssets(simulationPage);
+
+            const measuredWidth = Math.ceil(simulationPage.getBoundingClientRect().width);
+            const measuredHeight = Math.ceil(simulationPage.getBoundingClientRect().height);
+
+            if (measuredWidth !== EXPORT_WIDTH || measuredHeight !== EXPORT_HEIGHT) {
+              throw new Error("A área de exportação não atingiu as dimensões esperadas.");
+            }
+          } catch (error) {
+            restoreExportArea();
+            throw error;
+          }
 
           const options = {
             margin: 0,
@@ -1606,6 +1670,15 @@
             html2canvas: {
               scale: 2,
               useCORS: true,
+              allowTaint: false,
+              width: EXPORT_WIDTH,
+              height: EXPORT_HEIGHT,
+              windowWidth: EXPORT_WIDTH,
+              windowHeight: EXPORT_HEIGHT,
+              x: 0,
+              y: 0,
+              scrollX: 0,
+              scrollY: 0,
               backgroundColor: "#ffffff",
               logging: false,
             },
@@ -1614,12 +1687,20 @@
               format: "a4",
               orientation: "portrait",
             },
-            pagebreak: {
-              mode: ["css", "legacy"],
-            },
           };
 
-          await window.html2pdf().set(options).from(proposalDocument).save();
+          return window
+            .html2pdf()
+            .set(options)
+            .from(simulationPage)
+            .save()
+            .then(() => {
+              restoreExportArea();
+            })
+            .catch((error) => {
+              restoreExportArea();
+              throw error;
+            });
         }
 
         async function initializePage() {
