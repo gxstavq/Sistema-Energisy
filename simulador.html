@@ -1301,6 +1301,7 @@
         const generatePdfText = document.getElementById("generate-pdf-text");
         const proposalDocument = document.getElementById("proposal-document");
         let isGeneratingPdf = false;
+        let currentUser = null;
 
         function setMenuOpen(isOpen) {
           sidebar.classList.toggle("-translate-x-full", !isOpen);
@@ -1703,6 +1704,43 @@
             });
         }
 
+        async function findClientIdByName(clientName) {
+          const { data, error } = await window.supabaseClient
+            .from("clientes")
+            .select("id")
+            .eq("user_id", currentUser.id)
+            .eq("nome", clientName)
+            .limit(1)
+            .maybeSingle();
+
+          if (error) {
+            throw error;
+          }
+
+          return data?.id || null;
+        }
+
+        async function saveGeneratedProposal(clientName, calculation) {
+          if (!currentUser) {
+            throw new Error("Sessão não encontrada para registrar a proposta.");
+          }
+
+          const clientId = await findClientIdByName(clientName);
+          const { error } = await window.supabaseClient.from("propostas").insert([
+            {
+              user_id: currentUser.id,
+              cliente_id: clientId,
+              cliente_nome: clientName,
+              valor_proposta: calculation.investmentValue,
+              dados_simulacao: calculation,
+            },
+          ]);
+
+          if (error) {
+            throw error;
+          }
+        }
+
         async function initializePage() {
           if (!window.isSupabaseConfigured || !window.supabaseClient) {
             authLoaderText.textContent = "Supabase não configurado. Redirecionando...";
@@ -1726,9 +1764,10 @@
               return;
             }
 
-            const userEmail = session.user?.email || "Usuário autenticado";
+            currentUser = session.user;
+            const userEmail = currentUser?.email || "Usuário autenticado";
             sidebarUserEmail.textContent = userEmail;
-            headerUserGreeting.textContent = window.EnergisyAuth.getGreeting(session.user);
+            headerUserGreeting.textContent = window.EnergisyAuth.getGreeting(currentUser);
             hideAuthLoader();
           } catch (error) {
             authLoaderText.textContent = "Não foi possível validar sua sessão. Redirecionando...";
@@ -1793,10 +1832,12 @@
           try {
             populateProposalDocument(clientName, calculation);
             await generateProposalPdf(clientName);
+            await saveGeneratedProposal(clientName, calculation);
             generatedSuccessfully = true;
             showToast("Proposta gerada e download iniciado!", "success");
           } catch (error) {
-            showToast(error?.message || "Não foi possível gerar a proposta em PDF.");
+            console.error("Erro ao gerar ou registrar proposta:", error);
+            showToast("Não foi possível concluir e registrar a proposta. Tente novamente.");
           } finally {
             setPdfGenerating(false);
 
