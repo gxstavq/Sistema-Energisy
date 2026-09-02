@@ -316,24 +316,9 @@
         const propostasGeradasElement = document.getElementById("propostas-geradas");
         const valorNegociacaoElement = document.getElementById("valor-negociacao");
 
-        const PROPOSAL_STATUSES = new Set([
-          "proposta",
-          "proposta gerada",
-          "proposta enviada",
+        const NEGOTIATION_STATUSES = new Set([
           "em negociacao",
           "negociacao",
-          "fechado",
-        ]);
-
-        const LOST_STATUSES = new Set([
-          "desistencia",
-          "perdido",
-          "perdida",
-          "perda",
-          "cancelado",
-          "cancelada",
-          "rejeitado",
-          "rejeitada",
         ]);
 
         const brlFormatter = new Intl.NumberFormat("pt-BR", {
@@ -384,15 +369,13 @@
             .toLocaleLowerCase("pt-BR");
         }
 
-        function renderDashboardMetrics(clients) {
+        function renderDashboardMetrics(clients, proposals) {
           const totalLeads = clients.length;
-          const propostasGeradas = clients.filter((client) =>
-            PROPOSAL_STATUSES.has(normalizeStatus(client.status))
-          ).length;
+          const propostasGeradas = proposals.length;
           const valorEmNegociacao = clients.reduce((total, client) => {
             const status = normalizeStatus(client.status);
 
-            if (LOST_STATUSES.has(status)) {
+            if (!NEGOTIATION_STATUSES.has(status)) {
               return total;
             }
 
@@ -406,16 +389,29 @@
         }
 
         async function loadDashboardMetrics(userId) {
-          const { data: clients, error } = await window.supabaseClient
-            .from("clients")
-            .select("*")
-            .eq("user_id", userId);
+          const [clientsResult, proposalsResult] = await Promise.all([
+            window.supabaseClient
+              .from("clientes")
+              .select("id, status, valor_projeto")
+              .eq("user_id", userId),
+            window.supabaseClient
+              .from("propostas")
+              .select("id")
+              .eq("user_id", userId),
+          ]);
 
-          if (error) {
-            throw error;
+          if (clientsResult.error) {
+            throw clientsResult.error;
           }
 
-          renderDashboardMetrics(clients || []);
+          if (proposalsResult.error) {
+            throw proposalsResult.error;
+          }
+
+          renderDashboardMetrics(
+            clientsResult.data || [],
+            proposalsResult.data || []
+          );
         }
 
         async function protectDashboard() {
@@ -449,7 +445,7 @@
               await loadDashboardMetrics(session.user.id);
             } catch (error) {
               console.error("Erro ao carregar métricas do dashboard:", error);
-              showToast(error?.message || "Não foi possível carregar os dados do dashboard.");
+              showToast("Não foi possível atualizar os indicadores. Tente novamente.");
             }
 
             hideAuthLoader();
